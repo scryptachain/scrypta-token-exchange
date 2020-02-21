@@ -105,6 +105,16 @@ export class TradeService {
       }
     }
 
+    if(valid === true && trade.insertProof !== undefined && trade.insertPubKey !== undefined){
+      // TODO: create proof of action with the address signer, check it first then save it. We need to permit the cancellation of the order.
+    }else{
+      valid = false
+      return {
+        success: false,
+        message: "Insert Proof or PubKey is invalid"
+      }
+    }
+
     if(valid === true){
 
       let wallet = new Wallet.Lyra
@@ -140,7 +150,9 @@ export class TradeService {
       if(saved._id !== undefined){
         return {
           success: true,
-          uuid: uuid
+          uuid: uuid,
+          address: escrow['address'],
+          type: trade.type
         }
       }else{
         return {
