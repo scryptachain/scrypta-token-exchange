@@ -104,6 +104,17 @@ export class TradeService {
         }
       }
     }
+    
+    let expiration
+    if(trade.expiration !== undefined && trade.expiration > 0){
+      expiration = trade.expiration
+    }else{
+      var d = new Date();
+      d.setMonth(d.getMonth() + 1)
+      d.setHours(0, 0, 0)
+      d.setMilliseconds(0)
+      expiration = d.getTime() / 1000
+    }
 
     if(valid === true && trade.insertProof !== undefined && trade.insertPubKey !== undefined){
       // TODO: create proof of action with the address signer, check it first then save it. We need to permit the cancellation of the order.
@@ -136,7 +147,7 @@ export class TradeService {
         uuid: uuid,
         state: 'Created',
         timestamp: timestamp,
-        expiration: trade.expiration,
+        expiration: expiration,
         executed: false,
         amountAsset: trade.amountAsset,
         amountPair: trade.amountPair,
