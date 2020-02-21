@@ -5,6 +5,7 @@ import { Trade } from '../../interfaces/trade.interface'
 import * as RPC from '../../utils/rpc'
 import * as Wallet from '../../utils/wallet'
 const uuidv4 = require('uuid/v4')
+var crypto = require('crypto')
 
 @Injectable()
 export class TradeService {
@@ -111,10 +112,14 @@ export class TradeService {
       let uuid = uuidv4()
       let timestamp = Math.floor(Date.now() / 1000)
 
+      const cipher = crypto.createCipher('aes-256-cbc', process.env.SALT)
+      let private_key = cipher.update(JSON.stringify(escrow['private_key']), 'utf8', 'hex')
+      private_key += cipher.final('hex')
+
       let newTrade = {
         address: escrow['address'],
         pubkey: escrow['pub_key'],
-        privkey: escrow['private_key'],
+        privkey: private_key,
         asset: trade.asset,
         pair: trade.pair,
         type: trade.type,
