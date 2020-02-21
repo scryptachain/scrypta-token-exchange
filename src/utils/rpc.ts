@@ -1,6 +1,9 @@
 let request = require("request")
+let axios = require('axios')
 
 module RPC {
+
+    const idanodes = ['https://idanodejs01.scryptachain.org','https://idanodejs02.scryptachain.org','https://idanodejs03.scryptachain.org']
 
     export class Wallet {
   
@@ -43,6 +46,39 @@ module RPC {
               });
           })
       }
+
+    }
+
+    export class IdaNode {
+        public async connect() {
+            return new Promise(response => {
+                var connected = false
+                for(var i = 0; i < idanodes.length; i++){
+                    axios.get(idanodes[i] + '/wallet/getinfo').then(check => {
+                        if(check.data.blocks !== undefined && connected === false){
+                            connected = true
+                            response(check.config.url.replace('/wallet/getinfo',''))
+                        }
+                    })
+                }
+            })
+        }
+
+        public async post(method, params = {}) {
+            return new Promise(async response => {
+                let idanode = await this.connect()
+                let res = await axios.post(idanode + method, params)
+                response(res)
+            })
+        }
+        
+        public async get(method) {
+            return new Promise(async response => {
+                let idanode = await this.connect()
+                let res = await axios.get(idanode + method)
+                response(res)
+            })
+        }
     }
 
 }
