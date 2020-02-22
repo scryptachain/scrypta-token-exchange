@@ -116,13 +116,49 @@ export class TradeService {
       expiration = d.getTime() / 1000
     }
 
+    let insertHash = ''
+    let insertAddress = ''
     if(valid === true && trade.insertProof !== undefined && trade.insertPubKey !== undefined){
-      // TODO: create proof of action with the address signer, check it first then save it. We need to permit the cancellation of the order.
+      let proof = {
+        asset: trade.asset, 
+        pair: trade.pair,
+        type: trade.type,
+        amountAsset: trade.amountAsset,
+        amountPair: trade.amountPair,
+        senderAddress: trade.senderAddress
+      }
+      let wallet = new Wallet.Lyra
+      let check = await wallet.verifyMessage(trade.insertPubKey, trade.insertProof, JSON.stringify(proof))
+      if(check === false){
+        valid = false
+        return {
+          success: false,
+          message: "Can't validate proof signature."
+        }
+      }else{
+        insertHash = check['hash']
+        insertAddress = check['address']
+      }
     }else{
       valid = false
       return {
         success: false,
         message: "Insert Proof or PubKey is invalid"
+      }
+    }
+
+    if(valid === true){
+      
+      let check = await this.tradeModel.find({insertHash: insertHash}).exec();
+      for(let x in check){
+        let tt = check[x]
+        if(tt._id !== undefined && check.state !== 'Completed'){
+          valid = false
+          return {
+            success: false,
+            message: "This trade exist yet."
+          }
+        }
       }
     }
 
@@ -152,7 +188,11 @@ export class TradeService {
         amountAsset: trade.amountAsset,
         amountPair: trade.amountPair,
         senderAddress: trade.senderAddress,
-        matcherAddress: ""
+        matcherAddress: "",
+        insertPubKey: trade.insertPubKey,
+        insertProof: trade.insertProof,
+        insertHash: insertHash,
+        insertAddress: insertAddress
       }
 
       const createdTrade = new this.tradeModel(newTrade);
