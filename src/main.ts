@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 declare const module: any;
+import * as Daemon from './utils/daemon'
 
 if(process.env.TESTNET !== undefined){
   if(process.env.TESTNET === 'true'){
@@ -30,6 +31,9 @@ if(process.env.TESTNET !== undefined){
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(3000);
+  
+  let daemon = new Daemon.Watch
+  daemon.trades()
 
   if (module.hot) {
     module.hot.accept();
