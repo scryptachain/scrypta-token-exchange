@@ -30,6 +30,7 @@
     "coinkey": "^3.0.0",
     "coinstring": "^2.3.0",
     "crypto-js": "^4.0.0",
+    "hbs": "^4.1.0",
     "mongoose": "^5.9.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.0",

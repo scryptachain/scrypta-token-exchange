@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 declare const module: any;
 import * as Daemon from './utils/daemon'
+import { join } from 'path';
 
 if(process.env.TESTNET !== undefined){
   if(process.env.TESTNET === 'true'){
@@ -29,7 +31,12 @@ if(process.env.TESTNET !== undefined){
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule,
+  );
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  app.setViewEngine('hbs');
   await app.listen(3000);
   
   let daemon = new Daemon.Watch
