@@ -11,26 +11,68 @@ var crypto = require('crypto')
 export class TradeService {
   constructor(@InjectModel('Trade') private readonly tradeModel: Model<Trade>) {}
 
-  async returnActiveTrades(): Promise<Object> {
-    let tradesDB = await this.tradeModel.find({state: 'Waiting'}).exec();
-    let trades = []
-    
-    for(let x in tradesDB){
-      let trade = tradesDB[x]
-      trades.push({
-        address: trade.address,
-        asset: trade.asset,
-        pair: trade.pair,
-        type: trade.type,
-        timestamp: trade.timestamp,
-        expiration: trade.expiration,
-        amountAsset: trade.amountAsset,
-        amountPair: trade.amountPair,
-        uuid: trade.uuid,
-        hash: trade.insertHash
-      })
+  async returnHistoricTrades(trade): Promise<Object> {
+
+    if(trade.asset !== undefined && trade.pair !== undefined){
+      let tradesDB = await this.tradeModel.find({state: 'Completed', asset: trade.asset, pair: trade.pair}).sort({timestamp: 1}).exec();
+      let trades = []
+      let last = 0
+
+      for(let x in tradesDB){
+        let trade = tradesDB[x]
+        let price = trade.amountAsset / trade.amountPair
+        last = price
+
+        trades.push({
+          address: trade.address,
+          asset: trade.asset,
+          pair: trade.pair,
+          type: trade.type,
+          timestamp: trade.timestamp,
+          expiration: trade.expiration,
+          amountAsset: trade.amountAsset,
+          amountPair: trade.amountPair,
+          uuid: trade.uuid,
+          hash: trade.insertHash
+        })
+      }
+      return {
+        price: last,
+        trades: trades
+      }
+    }else{
+      return {
+        message: 'Provide asset and pair parameters first.'
+      }
     }
-    return trades
+  }
+
+  async returnActiveTrades(trade): Promise<Object> {
+    if(trade.asset !== undefined && trade.pair !== undefined){
+      let tradesDB = await this.tradeModel.find({state: 'Waiting', asset: trade.asset, pair: trade.pair}).exec();
+      let trades = []
+      
+      for(let x in tradesDB){
+        let trade = tradesDB[x]
+        trades.push({
+          address: trade.address,
+          asset: trade.asset,
+          pair: trade.pair,
+          type: trade.type,
+          timestamp: trade.timestamp,
+          expiration: trade.expiration,
+          amountAsset: trade.amountAsset,
+          amountPair: trade.amountPair,
+          uuid: trade.uuid,
+          hash: trade.insertHash
+        })
+      }
+      return trades
+    }else{
+      return {
+        message: 'Provide asset and pair parameters first.'
+      }
+    }
   }
 
   async createTrade(trade): Promise<Object> {

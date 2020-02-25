@@ -39,9 +39,13 @@ async function bootstrap() {
   await app.listen(3002);
   
   if(global['daemon'] === false){
-    global['daemon'] = true
-    let daemon = new Daemon.Watch
-    daemon.trades()
+    clearInterval(global['daemon'])
+    global['daemon'] = setInterval(async function(){
+      console.log('CHECKING ALL TRADES')
+      let daemon = new Daemon.Watch
+      await daemon.trades()
+      console.log('CHECKING COMPLETED, WAITING 10s')
+    }, 10000)
   }
 
   if (module.hot) {

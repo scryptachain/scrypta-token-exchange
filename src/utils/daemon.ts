@@ -9,7 +9,6 @@ module Daemon {
 
         public async trades() {
             return new Promise(async response => {
-                console.log('CHECKING ALL TRADES')
                 mongoose.connect('mongodb://localhost/exchange', {useNewUrlParser: true, useUnifiedTopology: true});
                 let idanode = new RPC.IdaNode
                 let trades = await TradeModel.find({ $or: [ { state: 'Created' }, { state: 'Waiting' }] }).exec()
@@ -201,11 +200,6 @@ module Daemon {
                     }
                 }
 
-                console.log('CHECKING COMPLETED')
-                setTimeout(function(){
-                    let daemon = new Daemon.Watch
-                    daemon.trades()
-                }, 30000)
                 response(true)
             })
         }

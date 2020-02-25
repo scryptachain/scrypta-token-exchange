@@ -16,8 +16,13 @@ export class TradeController {
     return await this.trades.cancelTrade(trade)
   }
 
-  @Get('active')
-  async returnActiveTrades(): Promise<Object> {
-    return await this.trades.returnActiveTrades()
+  @Post('active')
+  async returnActiveTrades(@Body() trade: CreateTradeDto): Promise<Object> {
+    return await this.trades.returnActiveTrades(trade)
+  }
+
+  @Post('history')
+  async returnHistoricTrades(@Body() trade: CreateTradeDto): Promise<Object> {
+    return await this.trades.returnHistoricTrades(trade)
   }
 }
