@@ -42,9 +42,10 @@ module Daemon {
                             // CHECKING LYRA BALANCE
                             let checkLyra = await idanode.get('/balance/' + trade.address)
                             let lyraBalance = checkLyra['data'].balance
-                            if(lyraBalance < trade.amountAsset){
+                            let lyraNeeded = trade.amountAsset + 0.002
+                            if(lyraBalance < lyraNeeded){
                                 valid = false
-                                console.log('LYRA BALANCE IS ' + lyraBalance + ', EXPECTED ' + trade.amountAsset)
+                                console.log('LYRA BALANCE IS ' + lyraBalance + ', EXPECTED ' + lyraNeeded)
                             }else{
                                 console.log('LYRA BALANCE MATCHES, NOW IS ' + lyraBalance)
                             }
@@ -68,7 +69,9 @@ module Daemon {
                                 matcher = transactions['data']['data'][0]['from'][0]
                             }else{
                                 let transactions = await idanode.post('/sidechain/transactions', { sidechain_address: trade.pair, dapp_address: trade.address })
-                                matcher = transactions['data']['transactions'][0]['from']
+                                if(transactions['data']['transactions'][0] !== undefined){
+                                    matcher = transactions['data']['transactions'][0]['from']
+                                }
                             }
                         }
                         if(matcher === ''){

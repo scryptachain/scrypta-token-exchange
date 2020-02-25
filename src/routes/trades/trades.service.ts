@@ -34,8 +34,10 @@ export class TradeService {
     }
 
     if(valid === true && trade.pair !== undefined){
+      console.log('CHECKING SIDECHAIN')
       if(trade.pair !== 'LYRA'){
         let check = await idanode.post('/sidechain/get',{sidechain_address: trade.pair})
+        console.log(check)
         if(check['data']['status'] === 422){
           valid = false
           return {
@@ -93,7 +95,6 @@ export class TradeService {
     }
 
     if(valid === true && trade.senderAddress !== undefined){
-      // check if address is valid
       let wallet = new RPC.Wallet
       let check = await wallet.request('validateaddress', [trade.senderAddress])
       if(check['result']['isvalid'] === false){
@@ -107,7 +108,17 @@ export class TradeService {
     
     let expiration
     if(trade.expiration !== undefined && trade.expiration > 0){
-      expiration = trade.expiration
+      let d = new Date()
+      let now = d.getTime() / 1000
+      if(now < trade.expiration){
+        expiration = trade.expiration
+      }else{
+        valid = false
+        return {
+          success: false,
+          message: 'Expiration is in the past.'
+        }
+      }
     }else{
       var d = new Date();
       d.setMonth(d.getMonth() + 1)
