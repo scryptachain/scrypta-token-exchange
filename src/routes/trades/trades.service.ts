@@ -257,7 +257,116 @@ export class TradeService {
   }
 
   async cancelTrade(trade): Promise<Object> {
-    let response = {}
+    let response
+    let valid = true
+    if(trade.tradeUUID !== undefined && trade.cancelProof !== undefined && trade.cancelPubKey !== undefined){
+      let checkTrade = await this.tradeModel.find({uuid: trade.tradeUUID}).exec();
+      if(checkTrade[0]._id !== undefined){
+        if(checkTrade[0].state === 'Created' || checkTrade[0].state === 'Waiting'){
+          if(checkTrade[0].insertPubKey === trade.cancelPubKey){
+            let proof = {
+              uuid: trade.tradeUUID,
+              action: 'cancelTrade'
+            }
+            let wallet = new Wallet.Lyra
+            let check = await wallet.verifyMessage(trade.cancelPubKey, trade.cancelProof, JSON.stringify(proof))
+            if(check === false){
+              valid = false
+              return {
+                success: false,
+                message: "Can't validate proof signature."
+              }
+            }
+
+            if(valid === true){
+              let refund = false
+              var decipher = crypto.createDecipher('aes-256-cbc', process.env.SALT)
+              var dec = decipher.update(checkTrade[0].privkey,'hex','utf8')
+              dec += decipher.final('utf8')
+              let private_key = dec.replace(/"/g, '')
+              let idanode = new RPC.IdaNode
+
+              if(checkTrade[0].type === 'SELL'){
+                  // RETURN SIDECHAIN FUNDS TO SENDER
+                  let checkPair = await idanode.post('/sidechain/balance', { sidechain_address: checkTrade[0].pair, dapp_address: checkTrade[0].address })
+                  let pairBalance = checkPair['data'].balance
+                  if(pairBalance >= checkTrade[0].amountPair){
+                      let txPair = await idanode.post('/sidechain/send',{
+                          sidechain_address: checkTrade[0].pair,
+                          from: checkTrade[0].address,
+                          to: checkTrade[0].senderAddress,
+                          amount: checkTrade[0].amountPair,
+                          pubkey: checkTrade[0].pubkey,
+                          private_key: private_key
+                      })
+                      console.log('REFUND TX IS ' + JSON.stringify(txPair['data']))
+                      if(txPair['data']['txs'][0] !== undefined){
+                          refund = true
+                      }
+                  }else{
+                      refund = true
+                  }
+              }else{
+                  // RETURN LYRA TO SENDER
+                  let checkLyra = await idanode.get('/balance/' + checkTrade[0].address)
+                  let lyraBalance = checkLyra['data'].balance
+                  if(lyraBalance > 0.001){
+                      let amount = checkTrade[0].amountAsset - 0.001
+                      let txLyra = await idanode.post('/send',{
+                          from: checkTrade[0].address,
+                          to: checkTrade[0].senderAddress,
+                          amount: amount,
+                          private_key: private_key
+                      })
+                      console.log('REFUND TX IS ' + JSON.stringify(txLyra['data']))
+                      if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false){
+                          refund = true
+                      }
+                  }else{
+                      refund = true
+                  }
+              }
+              if(refund === true){
+                  await this.tradeModel.updateOne({ _id: checkTrade[0]._id }, { state: 'Canceled' });
+                  return {
+                    success: true,
+                    message: "Order canceled."
+                  }
+              }else{
+                return {
+                  success: false,
+                  message: "Return failed, please retry."
+                }
+              }
+            }
+          }else{
+            valid = false
+            return {
+              success: false,
+              message: "Not authorized."
+            }
+          }
+        }else{
+          valid = false
+          return {
+            success: false,
+            message: "Trade canceled yet."
+          }
+        }
+      }else{
+        valid = false
+        return {
+          success: false,
+          message: "Can't find trade."
+        }
+      }
+    }else{
+      valid = false
+      return {
+        success: false,
+        message: "Delete Proof or PubKey is invalid"
+      }
+    }
     return response
   }
 }

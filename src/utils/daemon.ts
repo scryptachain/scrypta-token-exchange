@@ -37,7 +37,7 @@ module Daemon {
                             let private_key = dec.replace(/"/g, '')
 
                             if(trade.type === 'SELL'){
-                                // TODO: RETURN SIDECHAIN FUNDS TO SENDER
+                                // RETURN SIDECHAIN FUNDS TO SENDER
                                 let checkPair = await idanode.post('/sidechain/balance', { sidechain_address: trade.pair, dapp_address: trade.address })
                                 let pairBalance = checkPair['data'].balance
                                 if(pairBalance >= trade.amountPair){
@@ -57,7 +57,7 @@ module Daemon {
                                     refund = true
                                 }
                             }else{
-                                // TODO: RETURN LYRA TO SENDER
+                                // RETURN LYRA TO SENDER
                                 let checkLyra = await idanode.get('/balance/' + trade.address)
                                 let lyraBalance = checkLyra['data'].balance
                                 if(lyraBalance > 0.001){
