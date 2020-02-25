@@ -37,7 +37,6 @@ export class TradeService {
       console.log('CHECKING SIDECHAIN')
       if(trade.pair !== 'LYRA'){
         let check = await idanode.post('/sidechain/get',{sidechain_address: trade.pair})
-        console.log(check)
         if(check['data']['status'] === 422){
           valid = false
           return {
@@ -97,11 +96,19 @@ export class TradeService {
     if(valid === true && trade.senderAddress !== undefined){
       let wallet = new RPC.Wallet
       let check = await wallet.request('validateaddress', [trade.senderAddress])
-      if(check['result']['isvalid'] === false){
+      if(check['result'] !== undefined){
+        if(check['result']['isvalid'] === false){
+          valid = false
+          return {
+            success: false,
+            message: "Sender address is not valid"
+          }
+        }
+      }else{
         valid = false
         return {
           success: false,
-          message: "Sender address is not valid"
+          message: "Can't connect to LYRA wallet"
         }
       }
     }
@@ -163,7 +170,7 @@ export class TradeService {
       let check = await this.tradeModel.find({insertHash: insertHash}).exec();
       for(let x in check){
         let tt = check[x]
-        if(tt._id !== undefined && check.state !== 'Completed'){
+        if(tt._id !== undefined && tt.state !== 'Completed'){
           valid = false
           return {
             success: false,

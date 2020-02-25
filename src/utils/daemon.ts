@@ -95,7 +95,7 @@ module Daemon {
                                     private_key: private_key
                                 })
                                 console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
-                                if(txLyra['data']['data']['success'] === true){
+                                if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['success'] !== false){
                                     let txPair = await idanode.post('/sidechain/send',{
                                         sidechain_address: trade.pair,
                                         from: trade.address,
@@ -119,24 +119,31 @@ module Daemon {
                                 // SENDING SIDECHAIN ASSET TO SENDER AND LYRA TO MATCHER
                                 let txLyra = await idanode.post('/send',{
                                     from: trade.address,
-                                    to: trade.matcher,
+                                    to: matcher,
                                     amount: trade.amountAsset,
                                     private_key: private_key
                                 })
                                 console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
+                                if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['success'] !== false){
+                                    let txPair = await idanode.post('/sidechain/send',{
+                                        sidechain_address: trade.pair,
+                                        from: trade.address,
+                                        to: trade.senderAddress,
+                                        amount: trade.amountPair,
+                                        pubkey: trade.pubkey,
+                                        private_key: private_key
+                                    })
+                                    if(txPair['data']['txs'][0] !== undefined){
+                                        console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
+                                        await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed' });
+                                        console.log('TRADE COMPLETED!')
+                                    }else{
+                                        console.log("CAN'T SEND SIDECHAIN ASSET!")
+                                    }
+                                }else{
+                                    console.log("CAN'T SEND LYRA!")
+                                }
 
-                                let txPair = await idanode.post('/sidechain/send',{
-                                    sidechain_address: trade.pair,
-                                    from: trade.address,
-                                    to: trade.senderAddress,
-                                    amount: trade.amountPair,
-                                    pubkey: trade.pubkey,
-                                    private_key: private_key
-                                })
-                                console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
-
-                                await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed' });
-                                console.log('TRADE COMPLETED!')
                             }
                         }
                     }else{
