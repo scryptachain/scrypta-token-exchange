@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Render } from '@nestjs/common';
+import { Controller, Get, Post, Render, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -6,9 +6,8 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  @Render('index')
-  root() {
-    return { }
+  root(@Res() res) {
+    res.sendFile("index.html");
   }
 
   @Get('/status')
