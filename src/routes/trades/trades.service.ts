@@ -192,7 +192,7 @@ export class TradeService {
       let check = await this.tradeModel.find({insertHash: insertHash}).exec();
       for(let x in check){
         let tt = check[x]
-        if(tt._id !== undefined && tt.state !== 'Completed'){
+        if(tt._id !== undefined && tt.state !== 'Completed' && tt.state !== 'Canceled'){
           valid = false
           return {
             success: false,
@@ -284,6 +284,7 @@ export class TradeService {
               dec += decipher.final('utf8')
               let private_key = dec.replace(/"/g, '')
               let idanode = new RPC.IdaNode
+              let refundTx
 
               if(checkTrade[0].type === 'SELL'){
                   // RETURN SIDECHAIN FUNDS TO SENDER
@@ -298,6 +299,7 @@ export class TradeService {
                           pubkey: checkTrade[0].pubkey,
                           private_key: private_key
                       })
+                      refundTx = txPair['data']
                       console.log('REFUND TX IS ' + JSON.stringify(txPair['data']))
                       if(txPair['data']['txs'][0] !== undefined){
                           refund = true
@@ -318,6 +320,7 @@ export class TradeService {
                           private_key: private_key
                       })
                       console.log('REFUND TX IS ' + JSON.stringify(txLyra['data']))
+                      refundTx = txLyra['data']
                       if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false){
                           refund = true
                       }
@@ -329,6 +332,7 @@ export class TradeService {
                   await this.tradeModel.updateOne({ _id: checkTrade[0]._id }, { state: 'Canceled' });
                   return {
                     success: true,
+                    refundTx: refundTx,
                     message: "Order canceled."
                   }
               }else{
