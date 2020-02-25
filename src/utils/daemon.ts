@@ -29,13 +29,55 @@ module Daemon {
                         console.log('EXPIRATION IS ' + trade.expiration +', NOW IS ' + now)
                         if(now >= trade.expiration){
                             valid = false
+                            let refund = false
                             console.log('TRADE IS EXPIRED!')
+                            var decipher = crypto.createDecipher('aes-256-cbc', process.env.SALT)
+                            var dec = decipher.update(trade.privkey,'hex','utf8')
+                            dec += decipher.final('utf8')
+                            let private_key = dec.replace(/"/g, '')
+
                             if(trade.type === 'SELL'){
                                 // TODO: RETURN SIDECHAIN FUNDS TO SENDER
+                                let checkPair = await idanode.post('/sidechain/balance', { sidechain_address: trade.pair, dapp_address: trade.address })
+                                let pairBalance = checkPair['data'].balance
+                                if(pairBalance >= trade.amountPair){
+                                    let txPair = await idanode.post('/sidechain/send',{
+                                        sidechain_address: trade.pair,
+                                        from: trade.address,
+                                        to: trade.senderAddress,
+                                        amount: trade.amountPair,
+                                        pubkey: trade.pubkey,
+                                        private_key: private_key
+                                    })
+                                    console.log('REFUND TX IS ' + JSON.stringify(txPair['data']))
+                                    if(txPair['data']['txs'][0] !== undefined){
+                                        refund = true
+                                    }
+                                }else{
+                                    refund = true
+                                }
                             }else{
                                 // TODO: RETURN LYRA TO SENDER
+                                let checkLyra = await idanode.get('/balance/' + trade.address)
+                                let lyraBalance = checkLyra['data'].balance
+                                if(lyraBalance > 0.001){
+                                    let txLyra = await idanode.post('/send',{
+                                        from: trade.address,
+                                        to: trade.senderAddress,
+                                        amount: trade.amountAsset,
+                                        private_key: private_key
+                                    })
+                                    console.log('REFUND TX IS ' + JSON.stringify(txLyra['data']))
+                                    if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false){
+                                        refund = true
+                                    }
+                                }else{
+                                    refund = true
+                                }
                             }
-                            await TradeModel.updateOne({ _id: trade._id }, { state: 'Expired' });
+                            if(refund === true){
+                                await TradeModel.updateOne({ _id: trade._id }, { state: 'Expired' });
+                            }
                         }
 
                         if(valid === true){
@@ -95,7 +137,7 @@ module Daemon {
                                     private_key: private_key
                                 })
                                 console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
-                                if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['success'] !== false){
+                                if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false){
                                     let txPair = await idanode.post('/sidechain/send',{
                                         sidechain_address: trade.pair,
                                         from: trade.address,
@@ -106,7 +148,7 @@ module Daemon {
                                     })
                                     if(txPair['data']['txs'][0] !== undefined){
                                         console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
-                                        await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed' });
+                                        await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed', executed: true });
                                         console.log('TRADE COMPLETED!')
                                     }else{
                                         console.log("CAN'T SEND SIDECHAIN ASSET!")
@@ -123,7 +165,7 @@ module Daemon {
                                     private_key: private_key
                                 })
                                 console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
-                                if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['success'] !== false){
+                                if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false){
                                     let txPair = await idanode.post('/sidechain/send',{
                                         sidechain_address: trade.pair,
                                         from: trade.address,
@@ -134,7 +176,7 @@ module Daemon {
                                     })
                                     if(txPair['data']['txs'][0] !== undefined){
                                         console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
-                                        await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed' });
+                                        await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed', executed: true });
                                         console.log('TRADE COMPLETED!')
                                     }else{
                                         console.log("CAN'T SEND SIDECHAIN ASSET!")
