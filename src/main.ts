@@ -43,7 +43,9 @@ async function bootstrap() {
     global['daemon'] = setInterval(async function(){
       console.log('CHECKING ALL TRADES')
       let daemon = new Daemon.Watch
-      await daemon.trades()
+      await daemon.expired()
+      await daemon.deposits()
+      await daemon.matches()
       console.log('CHECKING COMPLETED, WAITING 10s')
     }, 10000)
   }

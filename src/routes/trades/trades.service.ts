@@ -270,7 +270,6 @@ export class TradeService {
         amountAsset: trade.amountAsset,
         amountPair: trade.amountPair,
         senderAddress: trade.senderAddress,
-        matcherAddress: "",
         insertPubKey: trade.insertPubKey,
         insertProof: trade.insertProof,
         insertHash: insertHash,

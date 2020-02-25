@@ -15,7 +15,6 @@ export interface Trade extends Document {
     readonly amountAsset: Number,
     readonly amountPair: Number,
     readonly senderAddress: String,
-    readonly matcherAddress: String,
     readonly insertProof: String,
     readonly insertPubKey: String,
     readonly insertHash: String,
