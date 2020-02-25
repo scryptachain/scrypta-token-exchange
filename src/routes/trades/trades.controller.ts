@@ -10,4 +10,9 @@ export class TradeController {
   async createtrade(@Body() trade: CreateTradeDto): Promise<Object> {
     return await this.trades.createTrade(trade)
   }
+
+  @Get('active')
+  async returnActiveTrades(): Promise<Object> {
+    return await this.trades.returnActiveTrades()
+  }
 }

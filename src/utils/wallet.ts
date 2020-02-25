@@ -49,10 +49,10 @@ module Wallet {
 
         public async getAddressFromPubKey(pubKey){
             return new Promise(response => {
-                let pubkeybuffer = new Buffer(pubKey,'hex')
+                let pubkeybuffer = Buffer.from(pubKey,'hex')
                 var sha = crypto.createHash('sha256').update(pubkeybuffer).digest()
                 let pubKeyHash = crypto.createHash('rmd160').update(sha).digest()
-                var hash160Buf = new Buffer(pubKeyHash, 'hex')
+                var hash160Buf = Buffer.from(pubKeyHash, 'hex')
                 response(cs.encode(hash160Buf, global['lyraInfo'].public)) 
             })
         }

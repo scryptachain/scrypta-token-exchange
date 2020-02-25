@@ -12,7 +12,7 @@ module Daemon {
                 console.log('CHECKING ALL TRADES')
                 mongoose.connect('mongodb://localhost/exchange', {useNewUrlParser: true, useUnifiedTopology: true});
                 let idanode = new RPC.IdaNode
-                let trades = await TradeModel.find({ state: 'Created' }).exec()
+                let trades = await TradeModel.find({ $or: [ { state: 'Created' }, { state: 'Waiting' }] }).exec()
                 
                 for(let x in trades){
                     let trade = trades[x]
@@ -61,10 +61,11 @@ module Daemon {
                                 let checkLyra = await idanode.get('/balance/' + trade.address)
                                 let lyraBalance = checkLyra['data'].balance
                                 if(lyraBalance > 0.001){
+                                    let amount = trade.amountAsset - 0.001
                                     let txLyra = await idanode.post('/send',{
                                         from: trade.address,
                                         to: trade.senderAddress,
-                                        amount: trade.amountAsset,
+                                        amount: amount,
                                         private_key: private_key
                                     })
                                     console.log('REFUND TX IS ' + JSON.stringify(txLyra['data']))
@@ -84,12 +85,15 @@ module Daemon {
                             // CHECKING LYRA BALANCE
                             let checkLyra = await idanode.get('/balance/' + trade.address)
                             let lyraBalance = checkLyra['data'].balance
-                            let lyraNeeded = trade.amountAsset + 0.002
+                            let lyraNeeded = trade.amountAsset
                             if(lyraBalance < lyraNeeded){
                                 valid = false
                                 console.log('LYRA BALANCE IS ' + lyraBalance + ', EXPECTED ' + lyraNeeded)
                             }else{
                                 console.log('LYRA BALANCE MATCHES, NOW IS ' + lyraBalance)
+                                if(trade.type === 'BUY'){
+                                    await TradeModel.updateOne({ _id: trade._id }, { state: 'Waiting' });
+                                }
                             }
 
                             // CHECKING PAIR BALANCE
@@ -100,6 +104,9 @@ module Daemon {
                                 console.log('PAIR BALANCE IS ' + pairBalance + ', EXPECTED ' + trade.amountPair)
                             }else{
                                 console.log('PAIR BALANCE MATCHES, NOW IS ' + pairBalance)
+                                if(trade.type === 'SELL'){
+                                    await TradeModel.updateOne({ _id: trade._id }, { state: 'Waiting' });
+                                }
                             }
                         }
                         let matcher = ''
@@ -122,6 +129,7 @@ module Daemon {
                         }else{
                             console.log('MATCHER IS ' + matcher)
                         }
+                        
                         if(valid === true){
                             console.log('PERFORMING SWAP!')
                             var decipher = crypto.createDecipher('aes-256-cbc', process.env.SALT)
@@ -130,10 +138,11 @@ module Daemon {
                             let private_key = dec.replace(/"/g, '')
                             if(trade.type === 'SELL'){
                                 // SENDING SIDECHAIN ASSET TO MATCHER AND LYRA TO SENDER
+                                let amount = trade.amountAsset - 0.002
                                 let txLyra = await idanode.post('/send',{
                                     from: trade.address,
                                     to: trade.senderAddress,
-                                    amount: trade.amountAsset,
+                                    amount: amount,
                                     private_key: private_key
                                 })
                                 console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
@@ -146,8 +155,8 @@ module Daemon {
                                         pubkey: trade.pubkey,
                                         private_key: private_key
                                     })
+                                    console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
                                     if(txPair['data']['txs'][0] !== undefined){
-                                        console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
                                         await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed', executed: true });
                                         console.log('TRADE COMPLETED!')
                                     }else{
@@ -158,10 +167,11 @@ module Daemon {
                                 }
                             }else{
                                 // SENDING SIDECHAIN ASSET TO SENDER AND LYRA TO MATCHER
+                                let amount = trade.amountAsset - 0.002
                                 let txLyra = await idanode.post('/send',{
                                     from: trade.address,
                                     to: matcher,
-                                    amount: trade.amountAsset,
+                                    amount: amount,
                                     private_key: private_key
                                 })
                                 console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
@@ -174,8 +184,8 @@ module Daemon {
                                         pubkey: trade.pubkey,
                                         private_key: private_key
                                     })
+                                    console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
                                     if(txPair['data']['txs'][0] !== undefined){
-                                        console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
                                         await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed', executed: true });
                                         console.log('TRADE COMPLETED!')
                                     }else{
@@ -184,7 +194,6 @@ module Daemon {
                                 }else{
                                     console.log("CAN'T SEND LYRA!")
                                 }
-
                             }
                         }
                     }else{

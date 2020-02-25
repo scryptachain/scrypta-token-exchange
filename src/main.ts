@@ -5,6 +5,7 @@ import * as Daemon from './utils/daemon'
 import { join } from 'path';
 declare const module: any;
 
+global['daemon'] = false
 if(process.env.TESTNET !== undefined){
   if(process.env.TESTNET === 'true'){
     // TESTNET BLOCKCHAIN PARAMS
@@ -35,10 +36,13 @@ async function bootstrap() {
     AppModule,
   );
   app.useStaticAssets(join(__dirname, '..', 'public'));
-  await app.listen(3000);
+  await app.listen(3002);
   
-  let daemon = new Daemon.Watch
-  daemon.trades()
+  if(global['daemon'] === false){
+    global['daemon'] = true
+    let daemon = new Daemon.Watch
+    daemon.trades()
+  }
 
   if (module.hot) {
     module.hot.accept();

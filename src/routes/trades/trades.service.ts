@@ -11,6 +11,29 @@ var crypto = require('crypto')
 export class TradeService {
   constructor(@InjectModel('Trade') private readonly tradeModel: Model<Trade>) {}
 
+  async returnActiveTrades(): Promise<Object> {
+    let tradesDB = await this.tradeModel.find({state: 'Waiting'}).exec();
+    let trades = []
+    let idanode = new RPC.IdaNode
+    
+    for(let x in tradesDB){
+      let trade = tradesDB[x]
+      trades.push({
+        address: trade.address,
+        asset: trade.asset,
+        pair: trade.pair,
+        type: trade.type,
+        timestamp: trade.timestamp,
+        expiration: trade.expiration,
+        amountAsset: trade.amountAsset,
+        amountPair: trade.amountPair,
+        uuid: trade.uuid,
+        hash: trade.insertHash
+      })
+    }
+    return trades
+  }
+
   async createTrade(trade): Promise<Object> {
     let valid = true
     let idanode = new RPC.IdaNode
@@ -231,5 +254,10 @@ export class TradeService {
       }
 
     }
+  }
+
+  async cancelTrade(trade): Promise<Object> {
+    let response = {}
+    return response
   }
 }
