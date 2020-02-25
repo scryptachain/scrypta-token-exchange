@@ -106,7 +106,6 @@ module Daemon {
                                     })
                                     if(txPair['data']['txs'][0] !== undefined){
                                         console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
-                                        
                                         await TradeModel.updateOne({ _id: trade._id }, { state: 'Completed' });
                                         console.log('TRADE COMPLETED!')
                                     }else{
