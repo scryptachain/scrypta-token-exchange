@@ -14,7 +14,6 @@ export class TradeService {
   async returnActiveTrades(): Promise<Object> {
     let tradesDB = await this.tradeModel.find({state: 'Waiting'}).exec();
     let trades = []
-    let idanode = new RPC.IdaNode
     
     for(let x in tradesDB){
       let trade = tradesDB[x]
