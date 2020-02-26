@@ -229,7 +229,9 @@ module Daemon {
                                         console.log("CAN'T SEND LYRA!")
                                     }
                                 }else{
-                                    console.log('SOMETHING IS WRONG WITH THE TRANSACTION')
+                                    if(valid === true){
+                                        console.log('SOMETHING IS WRONG WITH THE TRANSACTION')
+                                    }
                                 }
                             }
                         }else{

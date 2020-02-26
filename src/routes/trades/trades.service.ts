@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Trade } from '../../interfaces/trade.interface'
 import * as RPC from '../../utils/rpc'
 import * as Wallet from '../../utils/wallet'
+import { parse } from 'querystring'
 const uuidv4 = require('uuid/v4')
 var crypto = require('crypto')
 
@@ -64,10 +65,12 @@ export class TradeService {
               amountRemainPair = amountRemainPair - trade.orders[x].amountPair
             }
             amountRemainAsset = amountRemainPair * price
+            amountRemainAsset = parseFloat(amountRemainAsset.toFixed(8))
           }else if(trade.type === 'SELL'){
             for(let x in trade.orders){
               amountRemainAsset = amountRemainAsset - trade.orders[x].value + 0.002
             }
+            amountRemainAsset = parseFloat(amountRemainAsset.toFixed(8))
             amountRemainPair = amountRemainAsset / price
           }
 
