@@ -213,14 +213,6 @@ module Daemon {
                                             pubkey: trade.pubkey,
                                             private_key: private_key
                                         })
-                                        console.log(JSON.stringify({
-                                            sidechain_address: trade.pair,
-                                            from: trade.address,
-                                            to: matcher,
-                                            amount: amountPairExchange,
-                                            pubkey: trade.pubkey,
-                                            private_key: private_key
-                                        }))
                                         console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
                                         if(txPair['data']['txs'][0] !== undefined){
                                             if(amountReceived === trade.amountAsset){
