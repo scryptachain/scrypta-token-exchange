@@ -14,6 +14,7 @@ export const TradeModel = mongoose.model('Trade',{
   executed: Boolean,
   amountAsset: Number,
   amountPair: Number,
+  orders: Array,
   senderAddress: String,
   insertPubKey: String,
   insertProof: String,

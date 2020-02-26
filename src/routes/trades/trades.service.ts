@@ -267,6 +267,7 @@ export class TradeService {
         timestamp: timestamp,
         expiration: expiration,
         executed: false,
+        orders: [],
         amountAsset: trade.amountAsset,
         amountPair: trade.amountPair,
         senderAddress: trade.senderAddress,
