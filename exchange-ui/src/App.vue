@@ -3,7 +3,7 @@
     <b-navbar>
       <template slot="brand">
           <b-navbar-item tag="router-link" :to="{ path: '/' }">
-              <img src="https://raw.githubusercontent.com/buefy/buefy/dev/static/img/buefy-logo.png">
+              <img src="./assets/planum.png" height="40">
           </b-navbar-item>
       </template>
       <template slot="start">
@@ -40,8 +40,34 @@
   </div>
 </template>
 
-<style>
-  body, html{
-    font-family: "Work Sans";
-  }
+<style lang="scss">
+    @import "~bulma/sass/utilities/_all";
+    $primary: #D8213B;
+    $primary-invert: findColorInvert($primary);
+    $twitter: #4099FF;
+    $twitter-invert: findColorInvert($twitter);
+
+    $colors: (
+        "white": ($white, $black),
+        "black": ($black, $white),
+        "light": ($light, $light-invert),
+        "dark": ($dark, $dark-invert),
+        "primary": ($primary, $primary-invert),
+        "info": ($info, $info-invert),
+        "success": ($success, $success-invert),
+        "warning": ($warning, $warning-invert),
+        "danger": ($danger, $danger-invert),
+        "twitter": ($twitter, $twitter-invert)
+    );
+
+    $link: $primary;
+    $link-invert: $primary-invert;
+    $link-focus-border: $primary;
+
+    @import "~bulma";
+    @import "~buefy/src/scss/buefy";
+
+    body, html{
+        font-family: "Work Sans"!important;
+    }
 </style>
