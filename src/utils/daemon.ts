@@ -138,9 +138,8 @@ module Daemon {
                     console.log('CHECKING ' + trade.type + ' ' + trade.uuid)
                     console.log('TRADE ADDRESS IS ' + trade.address)
                     console.log('SIDECHAIN ADDRESS IS ' + trade.pair)
-                    let sidechainRes = idanode.post('/sidechain/get',{sidechain_address: trade.pair})
-                    let sidechain = sidechainRes['data']['sidechain']['data']
-
+                    let sidechainRes = await idanode.post('/sidechain/get',{sidechain_address: trade.pair})
+                    let sidechain = sidechainRes['data']['sidechain'][0]['data']['genesis']
                     var decipher = crypto.createDecipher('aes-256-cbc', process.env.SALT)
                     var dec = decipher.update(trade.privkey,'hex','utf8')
                     dec += decipher.final('utf8')
@@ -158,6 +157,10 @@ module Daemon {
                                 let amountAssetExchange = transaction['value'] - 0.002
                                 let amountPairExchange = amountAssetExchange / price
                                 let decimals = parseInt(sidechain.decimals)
+                                if(decimals === NaN){
+                                    valid = false
+                                    console.log("CAN'T GET SIDECHAIN DECIMALS")
+                                }
                                 amountPairExchange = parseFloat(amountPairExchange.toFixed(decimals))
                                 let found = false
                                 let amountReceived = 0
@@ -192,7 +195,7 @@ module Daemon {
                                         valid = false
                                     }
                                 }
-                                if(valid === true && found === false){
+                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0){
                                     // SENDING SIDECHAIN ASSET TO MATCHER AND LYRA TO SENDER
                                     let txLyra = await idanode.post('/send',{
                                         from: trade.address,
@@ -210,6 +213,14 @@ module Daemon {
                                             pubkey: trade.pubkey,
                                             private_key: private_key
                                         })
+                                        console.log(JSON.stringify({
+                                            sidechain_address: trade.pair,
+                                            from: trade.address,
+                                            to: matcher,
+                                            amount: amountPairExchange,
+                                            pubkey: trade.pubkey,
+                                            private_key: private_key
+                                        }))
                                         console.log('SIDECHAIN TX IS ' + JSON.stringify(txPair['data']))
                                         if(txPair['data']['txs'][0] !== undefined){
                                             if(amountReceived === trade.amountAsset){
@@ -225,6 +236,8 @@ module Daemon {
                                     }else{
                                         console.log("CAN'T SEND LYRA!")
                                     }
+                                }else{
+                                    console.log('SOMETHING IS WRONG WITH THE TRANSACTION')
                                 }
                             }
                         }else{
@@ -275,7 +288,7 @@ module Daemon {
                                     }
                                 }
                                 
-                                if(valid === true && found === false){
+                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0){
                                     // SENDING SIDECHAIN ASSET TO SENDER AND LYRA TO MATCHER
                                     let amount = amountAssetExchange - 0.002
                                     let txLyra = await idanode.post('/send',{
@@ -309,6 +322,8 @@ module Daemon {
                                     }else{
                                         console.log("CAN'T SEND LYRA!")
                                     }
+                                }else{
+                                    console.log('SOMETHING IS WRONG WITH THE TRANSACTION')
                                 }
                             }
                         }else{
