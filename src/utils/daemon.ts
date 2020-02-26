@@ -195,7 +195,7 @@ module Daemon {
                                         valid = false
                                     }
                                 }
-                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0){
+                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0 && amountReceived < trade.amountAsset){
                                     // SENDING SIDECHAIN ASSET TO MATCHER AND LYRA TO SENDER
                                     let txLyra = await idanode.post('/send',{
                                         from: trade.address,
@@ -282,7 +282,7 @@ module Daemon {
                                     }
                                 }
                                 
-                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0){
+                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0 && amountReceived < trade.amountPair){
                                     // SENDING SIDECHAIN ASSET TO SENDER AND LYRA TO MATCHER
                                     let amount = amountAssetExchange - 0.002
                                     let txLyra = await idanode.post('/send',{
