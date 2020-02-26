@@ -1,7 +1,7 @@
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get, Body, Post } from '@nestjs/common'
 import { LyraService } from './lyra.service'
 
-@Controller('lyra')
+@Controller('wallet')
 export class LyraController {
   constructor(private readonly lyra: LyraService) {}
 
@@ -11,7 +11,17 @@ export class LyraController {
   }
 
   @Get('getnewaddress')
-  async getNewAddress(): Promise<string> {
+  async getNewAddress(): Promise<Object> {
     return await this.lyra.getNewAddress()
+  }
+
+  @Post('sendlyra')
+  async sendLyra(@Body() info): Promise<Object> {
+    return await this.lyra.sendLyra(info)
+  }
+
+  @Post('sendtoken')
+  async sendToken(@Body() info): Promise<Object> {
+    return await this.lyra.sendToken(info)
   }
 }

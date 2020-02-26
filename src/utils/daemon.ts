@@ -101,7 +101,8 @@ module Daemon {
                     // CHECKING INITIAL LYRA BALANCE
                     let checkLyra = await idanode.get('/balance/' + trade.address)
                     let lyraBalance = checkLyra['data'].balance
-                    let lyraNeeded = trade.amountAsset
+                    let lyraNeeded = trade.amountAsset + 0.001
+                    console.log('LYRA BALANCE IS ' + lyraBalance)
                     if(trade.type === 'BUY' && lyraBalance === lyraNeeded){
                         if(trade.state === 'Created'){
                             await TradeModel.updateOne({ _id: trade._id }, { state: 'Waiting' });
@@ -111,7 +112,8 @@ module Daemon {
                     // CHECKING INITIAL PAIR BALANCE
                     let checkPair = await idanode.post('/sidechain/balance', { sidechain_address: trade.pair, dapp_address: trade.address })
                     let pairBalance = checkPair['data'].balance
-                    if(trade.type === 'SELL' && pairBalance === trade.amountPair){
+                    console.log('PAIR BALANCE IS ' + pairBalance)
+                    if(trade.type === 'SELL' && pairBalance === trade.amountPair && lyraBalance === 0.001){
                         if(trade.state === 'Created'){
                             await TradeModel.updateOne({ _id: trade._id }, { state: 'Waiting' });
                         }
@@ -150,17 +152,18 @@ module Daemon {
                                 let valid = true
                                 let transaction = transactions['data']['data'][x]
                                 let matcher = transaction['from'][0]
-                                if(matcher === trade.address){
-                                    valid = false
-                                }else{
-                                    console.log('FOUND INCOMING TRANSACTION OF ' + transaction['value'] + ' FROM ' + matcher)
-                                }
                                 let price = trade.amountAsset / trade.amountPair
-                                let amountAssetExchange = transaction['value']
-                                let amountPairExchange = transaction['value'] / price
+                                let amountAssetExchange = transaction['value'] - 0.002
+                                let amountPairExchange = amountAssetExchange / price
                                 let found = false
                                 let amountReceived = 0
                                 let orders = []
+
+                                if(matcher === trade.address || matcher === trade.senderAddress){
+                                    valid = false
+                                }else{
+                                    console.log('FOUND INCOMING TRANSACTION OF ' + amountAssetExchange + ' FROM ' + matcher)
+                                }
                                 
                                 if(valid === true){
                                     if(trade.orders !== undefined){
@@ -173,13 +176,13 @@ module Daemon {
                                             found = true
                                             console.log('TRANSACTION COMPLETED YET.')
                                         }
-                                        amountReceived += order['value']
+                                        amountReceived += order['value'] - 0.002
                                     }
 
                                     if(found === false){
                                         valid = true
                                         orders.push(transaction)
-                                        amountReceived += transaction['value']
+                                        amountReceived += transaction['value'] - 0.002
                                         await TradeModel.updateOne({ _id: trade._id }, { orders: orders });
                                     }else{
                                         valid = false
@@ -187,15 +190,14 @@ module Daemon {
                                 }
                                 if(valid === true && found === false){
                                     // SENDING SIDECHAIN ASSET TO MATCHER AND LYRA TO SENDER
-                                    let amount = amountAssetExchange - 0.002
                                     let txLyra = await idanode.post('/send',{
                                         from: trade.address,
                                         to: trade.senderAddress,
-                                        amount: amount,
+                                        amount: amountAssetExchange,
                                         private_key: private_key
                                     })
                                     console.log('LYRA TX IS ' + JSON.stringify(txLyra['data']))
-                                    if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false){
+                                    if(txLyra['data']['data']['success'] === true && txLyra['data']['data']['txid'] !== false && txLyra['data']['data']['txid'] !== null){
                                         let txPair = await idanode.post('/sidechain/send',{
                                             sidechain_address: trade.pair,
                                             from: trade.address,
@@ -231,19 +233,20 @@ module Daemon {
                                 let valid = false
                                 let transaction = transactions['data']['transactions'][x]
                                 let matcher = transaction['from']
-                                if(matcher === trade.address){
-                                    valid = false
-                                }else{
-                                    console.log('FOUND INCOMING TRANSACTION OF ' + transaction['amount'] + ' FROM ' + matcher)
-                                    valid = true
-                                }
-
                                 let price = trade.amountAsset / trade.amountPair
                                 let amountAssetExchange = transaction['amount'] * price
                                 let amountPairExchange = transaction['amount']
                                 let found = false
                                 let amountReceived = 0
                                 let orders = []
+
+                                if(matcher === trade.address){
+                                    valid = false
+                                }else{
+                                    console.log('FOUND INCOMING SIDECHAIN TRANSACTION OF ' + transaction['amount'] + ' FROM ' + matcher)
+                                    valid = true
+                                }
+
                                 if(valid === true){
                                     if(trade.orders !== undefined){
                                         orders = trade.orders

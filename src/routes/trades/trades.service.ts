@@ -47,25 +47,43 @@ export class TradeService {
     }
   }
 
-  async returnActiveTrades(trade): Promise<Object> {
-    if(trade.asset !== undefined && trade.pair !== undefined){
-      let tradesDB = await this.tradeModel.find({state: 'Waiting', asset: trade.asset, pair: trade.pair}).exec();
+  async returnActiveTrades(filter): Promise<Object> {
+    if(filter.asset !== undefined && filter.pair !== undefined){
+      let tradesDB = await this.tradeModel.find({ $or: [ { state: 'Waiting' }, { state: 'Partial' }] }).exec()
       let trades = []
       
       for(let x in tradesDB){
         let trade = tradesDB[x]
-        trades.push({
-          address: trade.address,
-          asset: trade.asset,
-          pair: trade.pair,
-          type: trade.type,
-          timestamp: trade.timestamp,
-          expiration: trade.expiration,
-          amountAsset: trade.amountAsset,
-          amountPair: trade.amountPair,
-          uuid: trade.uuid,
-          hash: trade.insertHash
-        })
+        if(trade.asset === filter.asset && trade.pair === filter.pair){
+          let amountRemainAsset = trade.amountAsset
+          let amountRemainPair = trade.amountPair
+          let price = trade.amountAsset / trade.amountPair
+          
+          if(trade.type === 'BUY'){
+            for(let x in trade.orders){
+              amountRemainPair = amountRemainPair - trade.orders[x].amountPair
+            }
+            amountRemainAsset = amountRemainPair * price
+          }else if(trade.type === 'SELL'){
+            for(let x in trade.orders){
+              amountRemainAsset = amountRemainAsset - trade.orders[x].value + 0.002
+            }
+            amountRemainPair = amountRemainAsset / price
+          }
+
+          trades.push({
+            address: trade.address,
+            asset: trade.asset,
+            pair: trade.pair,
+            type: trade.type,
+            timestamp: trade.timestamp,
+            expiration: trade.expiration,
+            amountAsset: amountRemainAsset,
+            amountPair: amountRemainPair,
+            uuid: trade.uuid,
+            hash: trade.insertHash
+          })
+        }
       }
       return trades
     }else{
