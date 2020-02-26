@@ -138,7 +138,9 @@ module Daemon {
                     console.log('CHECKING ' + trade.type + ' ' + trade.uuid)
                     console.log('TRADE ADDRESS IS ' + trade.address)
                     console.log('SIDECHAIN ADDRESS IS ' + trade.pair)
-                                            
+                    let sidechainRes = idanode.post('/sidechain/get',{sidechain_address: trade.pair})
+                    let sidechain = sidechainRes['data']['sidechain']['data']
+
                     var decipher = crypto.createDecipher('aes-256-cbc', process.env.SALT)
                     var dec = decipher.update(trade.privkey,'hex','utf8')
                     dec += decipher.final('utf8')
@@ -155,6 +157,8 @@ module Daemon {
                                 let price = trade.amountAsset / trade.amountPair
                                 let amountAssetExchange = transaction['value'] - 0.002
                                 let amountPairExchange = amountAssetExchange / price
+                                let decimals = parseInt(sidechain.decimals)
+                                amountPairExchange = parseFloat(amountPairExchange.toFixed(decimals))
                                 let found = false
                                 let amountReceived = 0
                                 let orders = []
