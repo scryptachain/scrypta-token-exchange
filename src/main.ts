@@ -36,6 +36,7 @@ async function bootstrap() {
     AppModule,
   );
   app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.enableCors();
   await app.listen(3002);
   
   if(global['daemon'] === false){

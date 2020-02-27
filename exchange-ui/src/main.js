@@ -3,6 +3,7 @@ import App from './App.vue'
 import './registerServiceWorker'
 import router from './router'
 import Buefy from 'buefy'
+import './assets/style.scss'
 
 Vue.config.productionTip = false
 Vue.use(Buefy)
