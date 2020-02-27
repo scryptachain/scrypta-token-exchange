@@ -5,11 +5,12 @@ var crypto = require('crypto')
 
 module Daemon {
 
+    mongoose.connect('mongodb://localhost/exchange', {useNewUrlParser: true, useUnifiedTopology: true});
+
     export class Watch {
 
         public async expired() {
             return new Promise(async response => {
-                mongoose.connect('mongodb://localhost/exchange', {useNewUrlParser: true, useUnifiedTopology: true});
                 let idanode = new RPC.IdaNode
                 let trades = await TradeModel.find({ $or: [ { state: 'Created' }, { state: 'Waiting' }, { state: 'Partial' }] }).exec()
                 
@@ -86,7 +87,6 @@ module Daemon {
 
         public async deposits() {
             return new Promise(async response => {
-                mongoose.connect('mongodb://localhost/exchange', {useNewUrlParser: true, useUnifiedTopology: true});
                 let idanode = new RPC.IdaNode
                 let trades = await TradeModel.find({ $or: [ { state: 'Created' } ] }).exec()
                 
@@ -127,7 +127,6 @@ module Daemon {
 
         public async matches() {
             return new Promise(async response => {
-                mongoose.connect('mongodb://localhost/exchange', {useNewUrlParser: true, useUnifiedTopology: true});
                 let idanode = new RPC.IdaNode
                 let trades = await TradeModel.find({ $or: [ { state: 'Waiting' }, { state: 'Partial' }] }).exec()
                 
@@ -328,7 +327,6 @@ module Daemon {
                     }
 
                 }
-
                 response(true)
             })
         }
