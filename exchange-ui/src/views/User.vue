@@ -280,7 +280,7 @@
           sells: [],
           buys: [],
           completed: [],
-          apiurl: 'http://178.62.200.158:3002'
+          apiurl: 'https://ex.planum.dev'
         }
     }
   }
