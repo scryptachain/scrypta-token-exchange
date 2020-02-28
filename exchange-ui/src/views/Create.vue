@@ -1,15 +1,34 @@
 <template>
   <div class="home">
     <b-loading :is-full-page="isFullPage" :active.sync="isLoading" :can-cancel="false"></b-loading>
-    <div class="columns" v-if="trade.owner !== user">
-      <div class="column is-three-fifths is-offset-one-fifth" v-if="trade.type === 'SELL'">
-        <h2 style="text-align:center; font-size:28px; font-weight:bold; margin-bottom:20px;">Buy {{ sidechain.data.genesis.symbol }} for LYRA</h2>
-        <h3 style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:20px;">Price is {{ trade.price }} LYRA for 1 {{ sidechain.data.genesis.symbol}}</h3>
-
-        <b-field :label="'Amount you mean to buy (Max is '+ trade.amountPair +' ' + sidechain.data.genesis.symbol +')'" class="text-center">
+    <h2 style="text-align:center; font-size:28px; font-weight:bold; margin-bottom:20px;">Create new trade</h2>
+    <div class="columns">
+      <div class="column is-three-fifths is-offset-one-fifth">
+        <b-field>
+            <b-select
+                placeholder="Select type"
+                size="is-medium"
+                v-model="trade.type"
+                expanded>
+                <option value="">Select a trade type</option>
+                <option value="buy">I want to buy an asset</option>
+                <option value="sell">I want to sell an asset</option>
+            </b-select>
+        </b-field>
+        <b-field>
+            <b-select
+                placeholder="Select asset"
+                size="is-medium"
+                v-model="trade.pair"
+                expanded>
+                <option value="">Select an asset</option>
+                <option v-for="asset in assets" v-bind:key="asset.address" :value="asset.address">{{ asset.genesis.name }}</option>
+            </b-select>
+        </b-field>
+        <b-field :label="'Amount you mean to ' + trade.type" class="text-center">
             <b-input size="is-large" :controls="false" v-model="amountPair" v-on:input="fixAmounts('pair')" type="is-dark"></b-input>
-        </b-field> 
-        <b-field :label="'Amount you will spend (Max is '+ trade.amountAsset +' LYRA)'" class="text-center">
+        </b-field>
+        <b-field :label="'Amount LYRA'" class="text-center">
             <b-input size="is-large" class="text-center" :controls="false" v-model="amountAsset" v-on:input="fixAmounts('asset')" type="is-dark"></b-input>
         </b-field>
         <div style="text-align:right; font-size:14px">You have {{ userBalance }} LYRA</div>
@@ -23,23 +42,18 @@
         </div>
       </div>
     </div>
-    <div class="columns" v-if="trade.owner === user">
-      <div class="column is-three-fifths is-offset-one-fifth">
-        <h2 style="text-align:center; font-size:28px; font-weight:bold; margin-bottom:20px;">You're selling {{ sidechain.data.genesis.symbol }} for LYRA</h2>
-        <h3 style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:20px;">Price is {{ trade.price }} LYRA for 1 {{ sidechain.data.genesis.symbol}}</h3>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
   const axios = require('axios')
   export default {
-    name: 'Trade',
+    name: 'Home',
     mounted : async function(){
         const app = this
         app.checkUser()
-        await app.getTrade()
+        await app.getAllAssets()
+        app.isLoading = false
     },
     methods: {
         async checkUser(){
@@ -47,9 +61,17 @@
             let user = await app.scrypta.keyExist()
             if(user.length === 34){
               app.user = user
-            }else{
-              window.location = '/#/'
             }
+        },
+        async getAllAssets(){
+          const app = this
+          let idanode = await app.scrypta.connectNode()
+          let assets = await app.axios.get(idanode + '/sidechain/list')
+          app.assets = assets['data']['data']
+          for(let x in app.assets){
+            let asset = app.assets[x]
+            app.chains[asset.address] = asset.genesis.symbol
+          }
         },
         openUnlock() {
             let valid = true
@@ -116,70 +138,6 @@
               })
             }
         },
-        async fixAmounts(what){
-          const app = this
-          let valid = true
-          let decimals = parseInt(app.sidechain.data.genesis.decimals)
-          if(app.amountAsset === ''){
-            app.amountAsset = 0
-          }
-          if(app.amountPair === ''){
-            app.amountPair = 0
-          }
-          if(app.amountAsset > 0){
-            app.amountAsset = parseFloat(parseFloat(app.amountAsset).toFixed(8))
-          }
-          if(app.amountPair > 0){
-            app.amountPair = parseFloat(parseFloat(app.amountPair).toFixed(decimals))
-          }
-          if(app.amountAsset > app.trade.amountAsset){
-            valid = false
-          }
-          if(app.amountPair > app.trade.amountPair){
-            valid = false
-          }
-          app.valid = valid
-          if(valid === true){
-            if(what === 'pair'){
-              app.amountAsset = parseFloat(app.amountPair) * parseFloat(app.trade.price)
-            }else{
-              app.amountPair = parseFloat(app.amountAsset) / parseFloat(app.trade.price)
-            }
-
-            app.amountAsset = parseFloat(parseFloat(app.amountAsset).toFixed(8))
-            app.amountPair = parseFloat(parseFloat(app.amountPair).toFixed(decimals))
-          }
-        },
-        async getTrade(){
-          const app = this
-          let trade = await app.axios.post(app.apiurl + '/trades/get', { uuid: app.$route.params.uuid })
-          app.trade = trade['data']['trade']
-          app.sidechain = trade['data']['sidechain']
-          app.amountPair = app.trade.amountPair
-          app.amountAsset = app.trade.amountAsset
-          if(app.trade.type === 'SELL'){
-            let balance = await app.axios.post(app.apiurl + '/wallet/balance', { asset: 'LYRA', address: app.user })
-            app.userBalance = balance['data']
-          }else if(app.trade.type === 'BUY'){
-            let balance = await app.axios.post(app.apiurl + '/wallet/balance', { asset: app.trade.pair, address: app.user })
-            app.userBalance = balance['data']
-          }
-          app.isLoading = false
-        },
-        convertTime(time){
-          let unix_timestamp = time
-          var date = new Date(unix_timestamp * 1000);
-          
-          var day = date.getUTCDate();
-          var month = date.getUTCMonth() + 1;
-          var year = date.getUTCFullYear();
-          var hours = date.getHours();
-          var minutes = "0" + date.getMinutes();
-          var seconds = "0" + date.getSeconds();
-
-          var formattedTime = day + '/' + month + '/' + year + ' at ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-          return formattedTime
-        },
         async logout() {
             const app = this;
             await app.scrypta.forgetKey();
@@ -201,15 +159,11 @@
           amountPair: 0,
           amountAsset: 0,
           trade: {
-            type: '-'
+            type: '',
+            pair: '',
           },
-          sidechain: {
-            data: {
-              genesis: {
-                symbol: '-'
-              }
-            }
-          },
+          chains: [],
+          assets: [],
           apiurl: 'http://localhost:3002'
         }
     }

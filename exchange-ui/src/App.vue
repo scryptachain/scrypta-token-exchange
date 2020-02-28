@@ -24,10 +24,10 @@
                   <a class="button is-primary" v-if="!user" href="/#/login">
                       <strong>Login</strong>
                   </a>
-                  <a class="button is-primary" v-if="user">
+                  <a class="button is-primary" href="/#/create" v-if="user">
                       <strong><b-icon icon="plus"></b-icon></strong>
                   </a>
-                  <a class="button is-primary" v-if="user">
+                  <a class="button is-primary" href="/#/user" v-if="user">
                       <strong><b-icon icon="account"></b-icon></strong>
                   </a>
                   <a class="button" v-if="user" v-on:click="logout">

@@ -18,6 +18,11 @@ const routes = [
     path: '/trade/:uuid',
     name: 'Trade',
     component: () => import('../views/Trade.vue')
+  },
+  {
+    path: '/create',
+    name: 'Create',
+    component: () => import('../views/Create.vue')
   }
 ]
 
