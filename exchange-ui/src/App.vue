@@ -13,9 +13,6 @@
           <b-navbar-item href="https://sidechain.scryptachain.org" target="_blank">
               Explorer
           </b-navbar-item>
-          <b-navbar-item href="/#/info">
-              Info
-          </b-navbar-item>
       </template>
 
       <template slot="end">

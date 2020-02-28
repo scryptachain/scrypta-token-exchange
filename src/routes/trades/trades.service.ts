@@ -103,7 +103,12 @@ export class TradeService {
   }
 
   async returnActiveTrades(filter): Promise<Object> {
-    let tradesDB = await this.tradeModel.find({ $or: [ { state: 'Waiting' }, { state: 'Partial' }] }).exec()
+    let tradesDB
+    if(filter.address === undefined){
+      tradesDB = await this.tradeModel.find({ $or: [ { state: 'Waiting' }, { state: 'Partial' }] }).exec()
+    }else{
+      tradesDB = await this.tradeModel.find({ insertAddress: filter.address }).exec()
+    }
     let trades = []
     
     for(let x in tradesDB){
@@ -160,6 +165,7 @@ export class TradeService {
             expiration: trade.expiration,
             amountAsset: amountRemainAsset,
             amountPair: amountRemainPair,
+            state: trade.state,
             uuid: trade.uuid,
             hash: trade.insertHash
           })
@@ -398,7 +404,7 @@ export class TradeService {
     if(trade.tradeUUID !== undefined && trade.cancelProof !== undefined && trade.cancelPubKey !== undefined){
       let checkTrade = await this.tradeModel.find({uuid: trade.tradeUUID}).exec();
       if(checkTrade[0]._id !== undefined){
-        if(checkTrade[0].state === 'Created' || checkTrade[0].state === 'Waiting'){
+        if(checkTrade[0].state === 'Created' || checkTrade[0].state === 'Waiting' || checkTrade[0].state === 'Partial'){
           if(checkTrade[0].insertPubKey === trade.cancelPubKey){
             let proof = {
               uuid: trade.tradeUUID,
@@ -422,17 +428,16 @@ export class TradeService {
               let private_key = dec.replace(/"/g, '')
               let idanode = new RPC.IdaNode
               let refundTx
-
               if(checkTrade[0].type === 'SELL'){
                   // RETURN SIDECHAIN FUNDS TO SENDER
                   let checkPair = await idanode.post('/sidechain/balance', { sidechain_address: checkTrade[0].pair, dapp_address: checkTrade[0].address })
                   let pairBalance = checkPair['data'].balance
-                  if(pairBalance >= checkTrade[0].amountPair){
+                  if(pairBalance > 0){
                       let txPair = await idanode.post('/sidechain/send',{
                           sidechain_address: checkTrade[0].pair,
                           from: checkTrade[0].address,
                           to: checkTrade[0].senderAddress,
-                          amount: checkTrade[0].amountPair,
+                          amount: pairBalance,
                           pubkey: checkTrade[0].pubkey,
                           private_key: private_key
                       })
@@ -449,7 +454,7 @@ export class TradeService {
                   let checkLyra = await idanode.get('/balance/' + checkTrade[0].address)
                   let lyraBalance = checkLyra['data'].balance
                   if(lyraBalance > 0.001){
-                      let amount = checkTrade[0].amountAsset - 0.001
+                      let amount = lyraBalance - 0.001
                       let txLyra = await idanode.post('/send',{
                           from: checkTrade[0].address,
                           to: checkTrade[0].senderAddress,
@@ -465,7 +470,7 @@ export class TradeService {
                       refund = true
                   }
               }
-              if(refund === true){
+              if(refund === true && refundTx !== undefined){
                   await this.tradeModel.updateOne({ _id: checkTrade[0]._id }, { state: 'Canceled' });
                   return {
                     success: true,
