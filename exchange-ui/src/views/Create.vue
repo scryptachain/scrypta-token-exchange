@@ -144,7 +144,7 @@
                       payload.insertProof = sign.signature
                       payload.insertPubKey = sign.pubkey
                       payload.insertHash = sign.hash
-                      let create = await app.axios.post(app.apiurl + '/trades/create',payload).catch(err => {console.log(err)})
+                      let create = await app.axios.post(app.apiurl + '/trades/create',payload)
                       if(create['data']['success'] === true){
                         if(app.trade.type === 'BUY'){
                           let send = await app.axios.post(app.apiurl + '/wallet/sendlyra',{
@@ -246,7 +246,7 @@
             "": ""
           },
           assets: [],
-          apiurl: 'http://localhost:3002'
+          apiurl: 'https://ex.planum.app'
         }
     }
   }

@@ -280,7 +280,7 @@
           sells: [],
           buys: [],
           completed: [],
-          apiurl: 'http://localhost:3002'
+          apiurl: 'https://ex.planum.app'
         }
     }
   }

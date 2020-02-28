@@ -46,7 +46,6 @@ export default {
         }
       },
       loadWalletFromFile() {
-        console.log('aaa')
         const app = this
         const file = app.file;
         const reader = new FileReader();

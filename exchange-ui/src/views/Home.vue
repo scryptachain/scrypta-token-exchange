@@ -189,7 +189,7 @@
           assets: [],
           sells: [],
           buys: [],
-          apiurl: 'http://localhost:3002'
+          apiurl: 'https://ex.planum.app'
         }
     }
   }
