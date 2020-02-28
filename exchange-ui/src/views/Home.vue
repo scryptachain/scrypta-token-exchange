@@ -58,29 +58,33 @@
           <div v-if="buys.length === 0">
             <h2 style="text-align:center; font-weight:bold; font-size:24px;">No buy orders.</h2>
           </div>
-          <div v-for="trade in buys" v-bind:key="trade.uuid">
-            <div v-if="trade.type === 'BUY'" class="list-trade">
-              <div class="columns">
-                <div class="column">
-                  <strong>SELLS</strong><br>
-                  {{ trade.amountPair }} {{ chains[trade.pair] }}
-                </div>
-                <div class="column">
-                  <strong>FOR</strong><br>
-                  {{ trade.amountAsset }} LYRA
-                </div>
-                <div class="column">
-                  <strong>CREATED</strong><br>
-                  {{ trade.timestamp }}
-                </div>
-                <div class="column">
-                  <strong>EXPIRES</strong><br>
-                  {{ trade.expiration }}
-                </div>
-                <div class="column">
-                  <a :href="'/#/trade/' + trade.uuid">
-                    <div class="button is-primary is-large" style="float:right">SELL</div>
-                  </a>
+          <div class="columns">
+            <div class="column is-three-fifths is-offset-one-fifth">
+              <div v-for="trade in buys" v-bind:key="trade.uuid">
+                <div v-if="trade.type === 'BUY'" class="list-trade">
+                  <div class="columns">
+                    <div class="column">
+                      <strong>BUYS</strong><br>
+                      {{ trade.amountPair }} {{ chains[trade.pair] }}
+                    </div>
+                    <div class="column">
+                      <strong>FOR</strong><br>
+                      {{ trade.amountAsset }} LYRA
+                    </div>
+                    <div class="column">
+                      <strong>CREATED</strong><br>
+                      {{ trade.timestamp }}
+                    </div>
+                    <div class="column">
+                      <strong>EXPIRES</strong><br>
+                      {{ trade.expiration }}
+                    </div>
+                    <div class="column">
+                      <a :href="'/#/trade/' + trade.uuid">
+                        <div class="button is-primary is-large" style="float:right">SELL</div>
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -189,12 +189,13 @@ module Daemon {
                                         valid = true
                                         orders.push(transaction)
                                         amountReceived += transaction['value'] - 0.002
-                                        await TradeModel.updateOne({ _id: trade._id }, { orders: orders });
                                     }else{
                                         valid = false
                                     }
                                 }
-                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0 && amountReceived < trade.amountAsset){
+                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0 && amountReceived <= trade.amountAsset){
+                                    // UPDATING PROCESSED ORDERS
+                                    await TradeModel.updateOne({ _id: trade._id }, { orders: orders });
                                     // SENDING SIDECHAIN ASSET TO MATCHER AND LYRA TO SENDER
                                     let txLyra = await idanode.post('/send',{
                                         from: trade.address,
@@ -275,13 +276,14 @@ module Daemon {
                                         valid = true
                                         orders.push(transaction)
                                         amountReceived += transaction['amount']
-                                        await TradeModel.updateOne({ _id: trade._id }, { orders: orders });
                                     }else{
                                         valid = false
                                     }
                                 }
                                 
-                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0 && amountReceived < trade.amountPair){
+                                if(valid === true && found === false && amountPairExchange > 0 && amountAssetExchange > 0 && amountReceived <= trade.amountPair){
+                                    // UPDATING PROCESSED ORDERS
+                                    await TradeModel.updateOne({ _id: trade._id }, { orders: orders });
                                     // SENDING SIDECHAIN ASSET TO SENDER AND LYRA TO MATCHER
                                     let amount = amountAssetExchange - 0.002
                                     let txLyra = await idanode.post('/send',{
@@ -317,6 +319,7 @@ module Daemon {
                                     }
                                 }else{
                                     if(valid === true){
+                                        console.log(amountAssetExchange, amountPairExchange, amountReceived, trade.amountPair)
                                         console.log('SOMETHING IS WRONG WITH THE TRANSACTION')
                                     }
                                 }

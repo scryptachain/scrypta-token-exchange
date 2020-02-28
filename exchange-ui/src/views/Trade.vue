@@ -22,6 +22,26 @@
           Sending LYRA, please wait.
         </div>
       </div>
+      <div class="column is-three-fifths is-offset-one-fifth" v-if="trade.type === 'BUY'">
+        <h2 style="text-align:center; font-size:28px; font-weight:bold; margin-bottom:20px;">Sell {{ sidechain.data.genesis.symbol }} for LYRA</h2>
+        <h3 style="text-align:center; font-size:18px; font-weight:bold; margin-bottom:20px;">Price is {{ trade.price }} LYRA for 1 {{ sidechain.data.genesis.symbol}}</h3>
+
+        <b-field :label="'Amount you mean to sell (Max is '+ trade.amountPair +' ' + sidechain.data.genesis.symbol +')'" class="text-center">
+            <b-input size="is-large" :controls="false" v-model="amountPair" v-on:input="fixAmounts('pair')" type="is-dark"></b-input>
+        </b-field> 
+        <div style="text-align:right; font-size:14px">You have {{ userBalance }} {{ sidechain.data.genesis.symbol }}</div>
+        <b-field :label="'Amount you will earn (Max is '+ trade.amountAsset +' LYRA)'" class="text-center">
+            <b-input size="is-large" class="text-center" :controls="false" v-model="amountAsset" v-on:input="fixAmounts('asset')" type="is-dark"></b-input>
+        </b-field>
+
+        <div class="text-center" v-if="!isSending">
+          <div v-if="valid" v-on:click="openUnlock" class="button is-primary is-large">SELL</div>
+          <div v-if="!valid">Amount is invalid.</div>
+        </div>
+        <div class="text-center" v-if="isSending">
+          Sending {{ sidechain.data.genesis.symbol }}, please wait.
+        </div>
+      </div>
     </div>
     <div class="columns" v-if="trade.owner === user">
       <div class="column is-three-fifths is-offset-one-fifth">
@@ -75,9 +95,9 @@
             }
             if(valid === true){
               app.$buefy.dialog.prompt({
-                  message: `Enter your wallet password`,
+                  message: `Enter your wallet password to complete trade.`,
                   inputAttrs: {
-                      placeholder: 'Enter password',
+                      placeholder: 'Enter password here',
                       type: 'password'
                   },
                   trapFocus: true,
@@ -104,12 +124,39 @@
                               type: 'is-success'
                           })
                           app.getTrade()
-                        }
-                      }else{
-                        app.$buefy.toast.open({
+                        }else{
+                          app.$buefy.toast.open({
                               message: 'Somthing goes wrong please retry.',
                               type: 'is-danger'
                           })
+                          app.isSending = false
+                        }
+                      }else if(app.trade.type === 'BUY'){
+                        let send = await app.axios.post(app.apiurl + '/wallet/sendtoken',{
+                          "from": app.user,
+                          "to": app.trade.address,
+                          "amount": app.amountPair,
+                          "private_key": wallet.prv,
+                          "pubkey": wallet.key,
+                          "sidechain_address": app.trade.pair,
+                          "fee": 0.002
+                        })
+                        app.isSending = false
+                        if(send['data']['lyra']['success'] === true && send['data']['sidechain']['txs'].length === 1){
+                          app.$buefy.toast.open({
+                              message: app.sidechain.data.genesis.symbol + ' sent correctly!',
+                              type: 'is-success'
+                          })
+                          setTimeout(function(){
+                            window.location = '/#/user'
+                          },1000)
+                        }else{
+                          app.$buefy.toast.open({
+                            message: 'Somthing goes wrong please retry.',
+                            type: 'is-danger'
+                          })
+                          app.isSending = false
+                        }
                       }
                     }
                   }

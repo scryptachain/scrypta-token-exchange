@@ -86,6 +86,22 @@ export class LyraService {
           pubkey: info.pubkey,
           sidechain_address: info.sidechain_address
         })
+        if(response['data']['uuid'] !== undefined && response['data']['txs'].length === 1){
+          let tradeDB = await this.tradeModel.find({address: info.to }).exec()
+          let trade = tradeDB[0]
+          if(trade.uuid !== undefined){
+            let pending = []
+            if(trade.pending !== undefined){
+              pending = trade.pending
+            }
+            pending.push({
+              from: info.from,
+              amount: info.amount,
+              txid: response['data']['txs'][0]
+            })
+            await this.tradeModel.updateOne({ _id: trade._id }, { pending: pending })
+          }
+        }
         return {
           sidechain: response['data'],
           lyra: responseSendLyra['data']['data']

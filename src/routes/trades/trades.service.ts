@@ -26,7 +26,7 @@ export class TradeService {
             sxids.push(trade.orders[x].sxids)
           }
           for(let x in trade.pending){
-            if(sxids.indexOf(trade.pending[x].sxid) === -1){
+            if(sxids.indexOf(trade.pending[x].sxid) === -1 && trade.pending[x].from !== trade.insertAddress){
               amountRemainPair = amountRemainPair - trade.pending[x].amount
             }
           }
@@ -39,7 +39,7 @@ export class TradeService {
             txids.push(trade.orders[x].txid)
           }
           for(let x in trade.pending){
-            if(txids.indexOf(trade.pending[x].txid) === -1){
+            if(txids.indexOf(trade.pending[x].txid) === -1 && trade.pending[x].from !== trade.insertAddress){
               amountRemainAsset = amountRemainAsset - trade.pending[x].amount + 0.002
             }
           }
@@ -129,7 +129,7 @@ export class TradeService {
             sxids.push(trade.orders[x].sxids)
           }
           for(let x in trade.pending){
-            if(sxids.indexOf(trade.pending[x].sxid) === -1){
+            if(sxids.indexOf(trade.pending[x].sxid) === -1 && trade.pending[x].from !== trade.insertAddress){
               amountRemainPair = amountRemainPair - trade.pending[x].amount
             }
           }
@@ -142,7 +142,7 @@ export class TradeService {
             txids.push(trade.orders[x].txid)
           }
           for(let x in trade.pending){
-            if(txids.indexOf(trade.pending[x].txid) === -1){
+            if(txids.indexOf(trade.pending[x].txid) === -1 && trade.pending[x].from !== trade.insertAddress){
               amountRemainAsset = amountRemainAsset - trade.pending[x].amount + 0.002
             }
           }
