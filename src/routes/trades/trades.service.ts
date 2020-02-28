@@ -4,13 +4,67 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Trade } from '../../interfaces/trade.interface'
 import * as RPC from '../../utils/rpc'
 import * as Wallet from '../../utils/wallet'
-import { parse } from 'querystring'
 const uuidv4 = require('uuid/v4')
 var crypto = require('crypto')
 
 @Injectable()
 export class TradeService {
   constructor(@InjectModel('Trade') private readonly tradeModel: Model<Trade>) {}
+
+  async getSingleTrade(request): Promise<Object> {
+    let idanode = new RPC.IdaNode
+    let tradeDB = await this.tradeModel.find({uuid: request.uuid }).exec()
+    let trade = tradeDB[0]
+    let sidechain = await idanode.post('/sidechain/get', {sidechain_address: trade.pair})
+    let amountRemainAsset = trade.amountAsset
+        let amountRemainPair = trade.amountPair
+        let price = trade.amountAsset / trade.amountPair
+        if(trade.type === 'BUY'){
+          let sxids = []
+          for(let x in trade.orders){
+            amountRemainPair = amountRemainPair - trade.orders[x].amountPair
+            sxids.push(trade.orders[x].sxids)
+          }
+          for(let x in trade.pending){
+            if(sxids.indexOf(trade.pending[x].sxid) === -1){
+              amountRemainPair = amountRemainPair - trade.pending[x].amount
+            }
+          }
+          amountRemainAsset = amountRemainPair * price
+          amountRemainAsset = parseFloat(amountRemainAsset.toFixed(8))
+        }else if(trade.type === 'SELL'){
+          let txids = []
+          for(let x in trade.orders){
+            amountRemainAsset = amountRemainAsset - trade.orders[x].value + 0.002
+            txids.push(trade.orders[x].txid)
+          }
+          for(let x in trade.pending){
+            if(txids.indexOf(trade.pending[x].txid) === -1){
+              amountRemainAsset = amountRemainAsset - trade.pending[x].amount + 0.002
+            }
+          }
+          amountRemainAsset = parseFloat(amountRemainAsset.toFixed(8))
+          amountRemainPair = amountRemainAsset / price
+        }
+
+    return {
+      sidechain: sidechain['data']['sidechain'][0],
+      trade: {
+        address: trade.address,
+        asset: trade.asset,
+        pair: trade.pair,
+        type: trade.type,
+        price: price,
+        timestamp: trade.timestamp,
+        expiration: trade.expiration,
+        amountAsset: amountRemainAsset,
+        amountPair: amountRemainPair,
+        uuid: trade.uuid,
+        hash: trade.insertHash,
+        owner: trade.insertAddress
+      }
+    }
+  }
 
   async returnHistoricTrades(trade): Promise<Object> {
 
@@ -69,31 +123,47 @@ export class TradeService {
         let price = trade.amountAsset / trade.amountPair
         
         if(trade.type === 'BUY'){
+          let sxids = []
           for(let x in trade.orders){
             amountRemainPair = amountRemainPair - trade.orders[x].amountPair
+            sxids.push(trade.orders[x].sxids)
+          }
+          for(let x in trade.pending){
+            if(sxids.indexOf(trade.pending[x].sxid) === -1){
+              amountRemainPair = amountRemainPair - trade.pending[x].amount
+            }
           }
           amountRemainAsset = amountRemainPair * price
           amountRemainAsset = parseFloat(amountRemainAsset.toFixed(8))
         }else if(trade.type === 'SELL'){
+          let txids = []
           for(let x in trade.orders){
             amountRemainAsset = amountRemainAsset - trade.orders[x].value + 0.002
+            txids.push(trade.orders[x].txid)
+          }
+          for(let x in trade.pending){
+            if(txids.indexOf(trade.pending[x].txid) === -1){
+              amountRemainAsset = amountRemainAsset - trade.pending[x].amount + 0.002
+            }
           }
           amountRemainAsset = parseFloat(amountRemainAsset.toFixed(8))
           amountRemainPair = amountRemainAsset / price
         }
-
-        trades.push({
-          address: trade.address,
-          asset: trade.asset,
-          pair: trade.pair,
-          type: trade.type,
-          timestamp: trade.timestamp,
-          expiration: trade.expiration,
-          amountAsset: amountRemainAsset,
-          amountPair: amountRemainPair,
-          uuid: trade.uuid,
-          hash: trade.insertHash
-        })
+        if(amountRemainAsset > 0 && amountRemainPair > 0){
+          trades.push({
+            address: trade.address,
+            asset: trade.asset,
+            pair: trade.pair,
+            type: trade.type,
+            price: price,
+            timestamp: trade.timestamp,
+            expiration: trade.expiration,
+            amountAsset: amountRemainAsset,
+            amountPair: amountRemainPair,
+            uuid: trade.uuid,
+            hash: trade.insertHash
+          })
+        }
       }
     }
     return trades
@@ -292,6 +362,7 @@ export class TradeService {
         expiration: expiration,
         executed: false,
         orders: [],
+        pending: [],
         amountAsset: trade.amountAsset,
         amountPair: trade.amountPair,
         senderAddress: trade.senderAddress,

@@ -24,4 +24,9 @@ export class LyraController {
   async sendToken(@Body() info): Promise<Object> {
     return await this.lyra.sendToken(info)
   }
+
+  @Post('balance')
+  async getBalance(@Body() request): Promise<Number> {
+    return await this.lyra.getBalance(request)
+  }
 }

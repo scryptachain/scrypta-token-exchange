@@ -13,6 +13,11 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('../views/Login.vue')
+  },
+  {
+    path: '/trade/:uuid',
+    name: 'Trade',
+    component: () => import('../views/Trade.vue')
   }
 ]
 

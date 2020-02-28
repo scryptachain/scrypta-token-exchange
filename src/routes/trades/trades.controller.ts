@@ -6,6 +6,11 @@ import { CreateTradeDto } from '../../dto/create-trade.dto';
 export class TradeController {
   constructor(private readonly trades: TradeService) {}
 
+  @Post('get')
+  async getSingleTrade(@Body() trade): Promise<Object> {
+    return await this.trades.getSingleTrade(trade)
+  }
+
   @Post('create')
   async createtrade(@Body() trade: CreateTradeDto): Promise<Object> {
     return await this.trades.createTrade(trade)

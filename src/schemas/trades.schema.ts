@@ -16,6 +16,7 @@ export const TradeSchema = new mongoose.Schema({
   amountPair: Number,
   senderAddress: String,
   orders: Array,
+  pending: Array,
   insertPubKey: String,
   insertProof: String,
   insertHash: String,

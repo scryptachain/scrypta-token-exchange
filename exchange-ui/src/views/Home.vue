@@ -44,7 +44,9 @@
                       {{ trade.expiration }}
                     </div>
                     <div class="column">
-                      <div class="button is-primary is-large" style="float:right">BUY</div>
+                      <a :href="'/#/trade/' + trade.uuid">
+                          <div class="button is-primary is-large" style="float:right">BUY</div>
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -76,7 +78,9 @@
                   {{ trade.expiration }}
                 </div>
                 <div class="column">
-                  <div class="button is-primary is-large" style="float:right">BUY</div>
+                  <a :href="'/#/trade/' + trade.uuid">
+                    <div class="button is-primary is-large" style="float:right">SELL</div>
+                  </a>
                 </div>
               </div>
             </div>
