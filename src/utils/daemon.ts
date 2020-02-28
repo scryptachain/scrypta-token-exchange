@@ -39,12 +39,12 @@ module Daemon {
                             // RETURN SIDECHAIN FUNDS TO SENDER
                             let checkPair = await idanode.post('/sidechain/balance', { sidechain_address: trade.pair, dapp_address: trade.address })
                             let pairBalance = checkPair['data'].balance
-                            if(pairBalance >= trade.amountPair){
+                            if(pairBalance > 0){
                                 let txPair = await idanode.post('/sidechain/send',{
                                     sidechain_address: trade.pair,
                                     from: trade.address,
                                     to: trade.senderAddress,
-                                    amount: trade.amountPair,
+                                    amount: pairBalance,
                                     pubkey: trade.pubkey,
                                     private_key: private_key
                                 })
@@ -60,7 +60,7 @@ module Daemon {
                             let checkLyra = await idanode.get('/balance/' + trade.address)
                             let lyraBalance = checkLyra['data'].balance
                             if(lyraBalance > 0.001){
-                                let amount = trade.amountAsset - 0.001
+                                let amount = lyraBalance - 0.001
                                 let txLyra = await idanode.post('/send',{
                                     from: trade.address,
                                     to: trade.senderAddress,
