@@ -257,7 +257,7 @@
               }
             }
           },
-          apiurl: 'https://ex.planum.app'
+          apiurl: 'http://178.62.200.158:3002'
         }
     }
   }
