@@ -10,10 +10,10 @@
           <b-navbar-item href="/#/">
               Exchange
           </b-navbar-item>
-          <b-navbar-item href="https://planum.dev/explorer" target="_blank">
+          <b-navbar-item href="https://planum.dev/#/explorer" target="_blank">
               Explorer
           </b-navbar-item>
-          <b-navbar-item href="https://planum.dev/create" target="_blank">
+          <b-navbar-item href="https://planum.dev/#/create" target="_blank">
               Create asset
           </b-navbar-item>
       </template>
