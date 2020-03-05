@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.5f8aa8fe8875d94f8650d15a406917be.js"
+  "/precache-manifest.869277e82e8de01d4a2d4806cbb30529.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "exchange-ui"});
