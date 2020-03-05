@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <b-loading :is-full-page="isFullPage" :active.sync="isLoading" :can-cancel="false"></b-loading>
-    <h2 style="text-align:center; font-size:28px; font-weight:bold; margin-bottom:20px;">Buy and Sell assets with LYRA</h2>
+    <h2 style="text-align:center; font-size:28px; font-weight:bold; margin-bottom:20px;">Explore Planum Swap Protocol</h2>
     <div class="columns">
       <div class="column is-one-third is-offset-one-third">
         <b-field>
@@ -11,7 +11,7 @@
                 v-model="assetSelected"
                 v-on:input="filterAssets"
                 expanded>
-                <option value="">Show all offers</option>
+                <option value="">Show all assets</option>
                 <option v-for="asset in assets" v-bind:key="asset.address" :value="asset.address">{{ asset.genesis.name }}</option>
             </b-select>
         </b-field>
